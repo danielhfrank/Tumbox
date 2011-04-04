@@ -5,35 +5,32 @@ are going to just look for an addition, and then pass that to the next function 
 handle
 '''
 
+from pyth.plugins.plaintext.writer import PlaintextWriter
+from pyth.plugins.rtf15.reader import Rtf15Reader
+
 import os
 import sys
 import time
 import json
 import hashlib
-from threading import Thread
-from pyth.plugins.plaintext.writer import PlaintextWriter
-from pyth.plugins.rtf15.reader import Rtf15Reader
+
+
+#Eclipse and others sometimes indicate an error on those first two. Ignore, I hope?
 
 TEST = True
 
 class ArchiverMain:
 
 
-        config_file = ''#whoa now...
         log_file = 'log'
-        dirs_present = []
         musicdir = '/Users/dan/Desktop/pyconfig'
-        scan_period_secs = 60 * 60
-        download_wait_secs = 60 * 10 if not TEST else 0
-        mbp_db_file = ''
+        mbp_db_file = '/Users/dan/Dropbox/.mbp_helpers/mbp_db'
         mbp_db = {}
         skip_dirs = ['DOCS - plz read', 'For Shame']
-        
-        def __init__(self):
-                self.dirs_present = self.getDirsPresent()
                                 
         def run_that_shit(self):
-                #self._load_db()
+                self._load_db()
+                processed = 0
                 for subdir in filter(lambda x: x not in self.skip_dirs, self.getDirsPresent()):
                         if '.mbp_guid' not in os.listdir(self.musicdir + '/' + subdir):
                                 #we got a new one! generate and rock out w cock out
@@ -42,19 +39,42 @@ class ArchiverMain:
                                 f = open(self.musicdir+'/'+subdir+'/.mbp_guid', 'w')
                                 f.write(guid)
                                 f.close()
+                                #Don't log now - this is now marked to be logged next time
                         else:
-                                print 'mbp_guid found in ' + subdir
-                        print 'done'
-        
+                                #now, action depends on whether we have that guid in our db or not
+                                f = open(self.musicdir+'/'+subdir+'/.mbp_guid', 'r')
+                                guid = f.read()
+                                f.close()
+                                if guid in self.mbp_db:
+                                    print 'woo hoo found guid!'
+                                    pass#nothing for now. could look for updates in the future
+                                else:
+                                    #We found but did not log last time. This means that we log now
+                                    if self._process_dir(self.musicdir+'/'+subdir, guid):
+                                        processed += 1
+                                        print 'Processing ' + subdir
+                self._log(str(processed) + " processed")
+                if processed > 0:
+                    self._save_db()
+                self._log('Exiting')
                         
         def _load_db(self):
                 #for now, assume that it is a file
-                f = open(self.mbp_db_file)
-                contents = f.read()
+                try:
+                    f = open(self.mbp_db_file)
+                    self.mbp_db = json.load(f)
+                    f.close()
+                    self._log('Successfully loaded db')
+                except:
+                    self.mbp_db = {}#THIS IS TEMPORARY to make sure we don't beef over empty file. DANGER
+        
+        def _save_db(self):
+                f = open(self.mbp_db_file, 'w')
+                json.dump(self.mbp_db, f, indent=5)
                 f.close()
-                self.mbp_db = json.loads(contents)
         
         def _log(self, text):
+                print text
                 pass#will want to print out and also write to a log file
 
         def fatal_error(self):
@@ -72,7 +92,6 @@ class ArchiverMain:
                 return (name.endswith(".mp3")) or (name.endswith(".m4a")) or (name.endswith(".aac"))
 
         def readPlaintext(self, path):
-                contents = ""
                 with open(path) as f:
                         contents = f.read()
                 f.closed
@@ -80,49 +99,56 @@ class ArchiverMain:
         
         def readRtf(self, path):
                 try:
-                  doc = Rtf15Reader.read(open(path, "rb"))
+                    doc = Rtf15Reader.read(open(path, "rb"))
                 except:
-                  print("Some screwy rtf shit going on with " + path)
-                  return "Can't process ur shitty rtf <3 dfbot"
+                    print("Some screwy rtf shit going on with " + path)
+                    return "Can't process ur shitty rtf <3 dfbot"
                 contents = PlaintextWriter.write(doc).getvalue()
                 #print contents
                 return contents
      
-class ArchiverWorker(Thread):
-        def run(self, root):
-                #first, sleep for several minutes to give this stuff time to download
-                time.sleep(self.download_wait_secs)
+        def _process_dir(self, root, guid=None):
                 text = ''
                 files = os.listdir(root)
                 for filename in files:
                         if filename.endswith(".txt"):
-                                text = readPlaintext(root + "/"+ filename)
+                                text = self.readPlaintext(root + "/"+ filename)
                                 break
                         if filename.endswith(".rtf"):
-                                text = readRtf(root +"/"+ filename)
+                                text = self.readRtf(root +"/"+ filename)
                                 break
                         if filename.endswith(".rtfd"):
-                                text = readRtf(root + '/' + filename + '/TXT.rtf')
+                                text = self.readRtf(root + '/' + filename + '/TXT.rtf')
                                 break
                 if text != '':
-                        (title, doc) = self.compose(root, text)
-                #now do what we will with this-- archive, email, blog, tweet....
+                        obj = self.compose(root, text)
+                        self.mbp_db[guid] = obj
+                        self.distribute(guid, obj)
+                        return True
                 else:
-                        pass#notify someone, or at least log something indicating that we failed to find any info
+                        self._log('No info file found in ' + root)
+                        return False
         
         def compose(self, folder_path, text):
                 title = folder_path.rsplit("/")[-1]#folder_path better have / in it
                 all_files = os.listdir(folder_path)
                 doc = text
                 doc +='\n\nTracklist:\n'
-                tracks = filter(looksLikeMusic, all_files)
-                if len(tracks) == 0: f.write( "No music :(")
+                tracks = filter(self.looksLikeMusic, all_files)
+                if len(tracks) == 0: doc += "No music :("
                 for track in tracks:
                     doc += (track[:-4] + "\n")
                 highlightFiles = self._find_highlights(text, tracks)
                 author = self._find_author(text)
-                return (title, doc)
-
+                retMap = {
+                          'content':doc,
+                          'author':author,
+                          'found_on':time.time(),
+                          'highlights':highlightFiles,
+                          'title':title
+                          }
+                return retMap
+    
         def _find_highlights(self, text, musicfiles):
                 lines = text.split('\n')
                 highlightLines = [x for x in lines if x.lower().startswith('highlights:')]
@@ -134,13 +160,21 @@ class ArchiverWorker(Thread):
                 for musicfile in musicfiles:
                         if any(songname in musicfile for songname in titles): results.append(musicfile)
                 return results
-
+    
         def _find_author(self, text):
                 lines = text.split('\n')
                 authorLines = [x for x in lines if x.startswith('-')]
                 if len(authorLines) == 0: return None
                 authorLine = authorLines[0] #this time assume first: people sometimes use - in comments
                 return authorLine[1:].strip()
+        
+        '''
+        This is where we save our post object to various sources. Uncomment and add for different sources
+        '''    
+        def distribute(self, guid, obj):
+                #This shit is seriously just for testing
+                print obj['content']
+                pass
                 
                 
              
