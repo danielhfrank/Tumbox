@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python2.7
 '''
 The idea here is to be able to monitor a folder for changes. Specifically, additions. I think we 
 are going to just look for an addition, and then pass that to the next function to
@@ -28,6 +28,7 @@ class ArchiverMain:
             self.mbp_db_file = mbpconfig.db_file
             self.mbp_db = {}
             self.skip_dirs = mbpconfig.skip_dirs
+            self.log_output = ''
             
                                 
         def run_that_shit(self):
@@ -48,7 +49,6 @@ class ArchiverMain:
                                 guid = f.read()
                                 f.close()
                                 if guid in self.mbp_db:
-                                    print 'woo hoo found guid!'
                                     pass#nothing for now. could look for updates in the future
                                 else:
                                     #We found but did not log last time. This means that we log now
@@ -76,14 +76,21 @@ class ArchiverMain:
                 f.close()
         
         def _log(self, text):
+                self.log_output += '\n' + text
                 print text
-                pass#will want to print out and also write to a log file
 
         def fatal_error(self):
                 print 'disaster'#will probably want to email me or something
                 
+        def cleanup(self):
+                f = open(self.log_file, 'a')
+                f.write('********' +time.strftime("%a, %d %b %Y %H:%M") +'**********')
+                f.write(self.log_output)
+                f.close()
+                
         def getDirsPresent(self):
                 return [x for x in os.listdir(self.musicdir) if os.path.isdir(self.musicdir + '/' + x)]
+            
         
         #######################################
         ##This stuff copied from old archiver##
@@ -188,3 +195,4 @@ if __name__ == "__main__":
         archiver = ArchiverMain()
         #archiver.mainloop()
         archiver.run_that_shit()
+        archiver.cleanup()
