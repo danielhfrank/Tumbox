@@ -53,6 +53,7 @@ class ArchiverMain:
                                 else:
                                     #We found but did not log last time. This means that we log now
                                     if self._process_dir(self.musicdir+'/'+subdir, guid):
+                                        self._log('Processed ' +subdir)
                                         processed += 1
                                         print 'Processing ' + subdir
                 self._log(str(processed) + " processed")
@@ -103,14 +104,13 @@ class ArchiverMain:
         def readPlaintext(self, path):
                 with open(path) as f:
                         contents = f.read()
-                f.closed
                 return contents
         
         def readRtf(self, path):
                 try:
                     doc = Rtf15Reader.read(open(path, "rb"))
                 except:
-                    print("Some screwy rtf shit going on with " + path)
+                    self._log("Some screwy rtf shit going on with " + path)
                     return "Can't process ur shitty rtf <3 dfbot"
                 contents = PlaintextWriter.write(doc).getvalue()
                 #print contents
