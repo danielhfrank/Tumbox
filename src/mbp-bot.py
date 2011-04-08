@@ -85,7 +85,7 @@ class ArchiverMain:
                 
         def cleanup(self):
                 f = open(self.log_file, 'a')
-                f.write('********' +time.strftime("%a, %d %b %Y %H:%M") +'**********')
+                f.write('\n********' +time.strftime("%a, %d %b %Y %H:%M") +'**********')
                 f.write(self.log_output)
                 f.close()
                 
