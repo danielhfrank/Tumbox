@@ -8,6 +8,12 @@ handle
 from pyth.plugins.plaintext.writer import PlaintextWriter
 from pyth.plugins.rtf15.reader import Rtf15Reader
 
+import smtplib
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEBase import MIMEBase
+from email.MIMEText import MIMEText
+from email import Encoders
+
 import os
 import sys
 import time
@@ -32,7 +38,7 @@ class ArchiverMain:
             
                                 
         def run_that_shit(self):
-                self._load_db()
+                self._load_db()                
                 processed = 0
                 for subdir in filter(lambda x: x not in self.skip_dirs, self.getDirsPresent()):
                         if '.mbp_guid' not in os.listdir(self.musicdir + '/' + subdir):
@@ -183,13 +189,36 @@ class ArchiverMain:
         def distribute(self, guid, obj):               
                 print obj['content']#This shit is seriously just for testing
                 if mbpconfig.local_archive: self.archive_locally(guid, obj)
+                if mbpconfig.email_people: self.email_people(guid, obj)
                 pass
         
         def archive_locally(self, guid, obj):
                 archive_dir = mbpconfig.archive_dir if not TEST else mbpconfig.archive_test_dir
                 f = open(archive_dir + '/' + obj['title'] + '.txt', 'w')
-                f.write(obj['content'])        
+                f.write(obj['content'])
                 
+        def email_people(self, guid, obj):
+                try:
+                    msg = MIMEMultipart()
+                    msg['From'] = mbpconfig.mailer_email_address
+                    msg['To'] = mbpconfig.mailer_email_address
+                    msg['Subject'] = '[MBP] New post from ' + (obj['author'] if obj['author'] is not None else 'someone in mbp')
+                    
+                    msg.attach(MIMEText(obj['content'] + '\n\n--------------\nRock on, MBP'))
+                            
+                    server = smtplib.SMTP('smtp.gmail.com',587)
+                    server.ehlo()  
+                    server.starttls()
+                    server.ehlo()
+                    server.login(mbpconfig.mailer_email_address, mbpconfig.mailer_pw)
+                    response = server.sendmail(mbpconfig.mailer_email_address,
+                                    mbpconfig.email_address_list,
+                                    msg.as_string())
+                    if len(response) != 0:
+                         self._log('Possibly some trouble with emailing: ' +str(response))
+                    server.close()        
+                except:
+                    self._log("Some kind of disastrous error occurred while emailing " + obj['title']) 
              
 if __name__ == "__main__":
         archiver = ArchiverMain()
