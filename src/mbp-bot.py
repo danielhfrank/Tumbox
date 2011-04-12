@@ -19,6 +19,7 @@ import sys
 import time
 import json
 import hashlib
+import shutil
 import mbpconfig
 
 
@@ -202,9 +203,9 @@ class ArchiverMain:
         Given list of files in a directory, try to extract which one is cover art
         '''
         def _find_picture(self, filenames):
-                img_files = [x.lower() for x in filenames if self.looksLikeAPicture(x)]
+                img_files = [x for x in filenames if self.looksLikeAPicture(x)]
                 if len(img_files) < 1: return None
-                good_names = ['folder.jpg', 'cover.jpg', 'front.jpg']
+                good_names = ['Folder.jpg', 'folder.jpg', 'cover.jpg', 'front.jpg']
                 for name in good_names:
                     if name in img_files: return name
                 return img_files[0]
@@ -272,19 +273,19 @@ class ArchiverMain:
                 
                 if obj['picture'] is not None:
                     pic_path = obj['full_path'] + '/' + obj['picture']
-                    os.system('cp ' + pic_path + ' ' + media_dir)
+		    shutil.copy(pic_path, media_dir)
                     text = '<img src="' + mbpconfig.hosted_media_url+'/'+guid+'/'+obj['picture']+'"/>\n\n'
                 if audio:
-                    song_path = obj['full_path'] + '/' + object['highlights'][0]
-                    os.system('cp ' + song_path + ' ' + media_dir)
-                
+                    song_path = obj['full_path'] + '/' + obj['highlights'][0]
+                    shutil.copy(song_path, media_dir)                
+
                 #now that we have media in place, can create our post
                 text += obj['content'] if not audio else obj['title'] + '\n\n' + obj['content']
                 
                 #create post params...
                 if audio:
                     print 'gonna be an audio post'
-                    params = {'externally_hosted_url':mbpconfig.hosted_media_url+'/'+guid+'/'+object['highlights'][0],
+                    params = {'externally_hosted_url':mbpconfig.hosted_media_url+'/'+guid+'/'+obj['highlights'][0],
                               'caption':text}
                 else:
                     print 'gonna be a text post'
@@ -305,6 +306,7 @@ class ArchiverMain:
                     self._log("Failed to post to tumblr, possibly some encoding issue")
              
 if __name__ == "__main__":
+        #sys.exit()
         archiver = ArchiverMain()
         #archiver.mainloop()
         archiver.run_that_shit()
