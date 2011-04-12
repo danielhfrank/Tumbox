@@ -38,7 +38,15 @@ class ArchiverMain:
             
                                 
         def run_that_shit(self):
-                self._load_db()                
+                self._load_db()
+#                for key in self.mbp_db.keys():
+#                    self.mbp_db[key]['full_path'] = ''
+#                self._save_db()
+#                guid = self.mbp_db.keys()[1]
+#                self.blog(guid, self.mbp_db[guid])
+#                sys.exit()
+                
+                                
                 processed = 0
                 for subdir in filter(lambda x: x not in self.skip_dirs, self.getDirsPresent()):
                         if '.mbp_guid' not in os.listdir(self.musicdir + '/' + subdir):
@@ -104,8 +112,12 @@ class ArchiverMain:
         ########################################
         
         def looksLikeMusic(self, name):
-                print name
+                #print name
                 return (name.endswith(".mp3")) or (name.endswith(".m4a")) or (name.endswith(".aac"))
+                
+        def looksLikeAPicture(self, name):
+                extension = name[name.index('.')+1:]
+                return (extension in ['jpg', 'jpeg', 'gif', 'png'])
 
         def readPlaintext(self, path):
                 with open(path) as f:
@@ -155,12 +167,15 @@ class ArchiverMain:
                     doc += (track[:-4] + "\n")
                 highlightFiles = self._find_highlights(text, tracks)
                 author = self._find_author(text)
+                picture = self._find_picture(all_files)
                 retMap = {
                           'content':doc,
                           'author':author,
                           'found_on':time.time(),
                           'highlights':highlightFiles,
-                          'title':title
+                          'title':title,
+                          'picture':picture,
+                          'full_path': folder_path
                           }
                 return retMap
     
@@ -184,12 +199,24 @@ class ArchiverMain:
                 return authorLine[1:].strip()
         
         '''
+        Given list of files in a directory, try to extract which one is cover art
+        '''
+        def _find_picture(self, filenames):
+                img_files = [x.lower() for x in filenames if self.looksLikeAPicture(x)]
+                if len(img_files) < 1: return None
+                good_names = ['folder.jpg', 'cover.jpg', 'front.jpg']
+                for name in good_names:
+                    if name in img_files: return name
+                return img_files[0]
+        
+        '''
         This is where we save our post object to various sources. Uncomment and add for different sources
         '''    
         def distribute(self, guid, obj):               
                 print obj['content']#This shit is seriously just for testing
                 if mbpconfig.local_archive: self.archive_locally(guid, obj)
                 if mbpconfig.email_people: self.email_people(guid, obj)
+                if mbpconfig.tumblr: self.blog(guid, obj)
                 pass
         
         def archive_locally(self, guid, obj):
@@ -197,28 +224,85 @@ class ArchiverMain:
                 f = open(archive_dir + '/' + obj['title'] + '.txt', 'w')
                 f.write(obj['content'])
                 
+        def compose_email(self, guid, obj):
+                subject = '[MBP] New post from ' + (obj['author'] if obj['author'] is not None else 'someone in mbp')
+                text = obj['title'] + '\n\n' + obj['content'] + '\n\n--------------\nRock on, MBP'
+                return (subject, text)
+        
+        def send_email(self, subject, text):
+                msg = MIMEMultipart()
+                msg['From'] = mbpconfig.mailer_email_address
+                msg['To'] = mbpconfig.mailer_email_address
+                msg['Subject'] = subject
+                
+                msg.attach(MIMEText(text))
+                        
+                server = smtplib.SMTP('smtp.gmail.com',587)
+                server.ehlo()  
+                server.starttls()
+                server.ehlo()
+                server.login(mbpconfig.mailer_email_address, mbpconfig.mailer_pw)
+                response = server.sendmail(mbpconfig.mailer_email_address,
+                                mbpconfig.email_address_list,
+                                msg.as_string())
+                if len(response) != 0:
+                     self._log('Possibly some trouble with emailing: ' +str(response))
+                server.close()
+                
         def email_people(self, guid, obj):
                 try:
-                    msg = MIMEMultipart()
-                    msg['From'] = mbpconfig.mailer_email_address
-                    msg['To'] = mbpconfig.mailer_email_address
-                    msg['Subject'] = '[MBP] New post from ' + (obj['author'] if obj['author'] is not None else 'someone in mbp')
-                    
-                    msg.attach(MIMEText(obj['content'] + '\n\n--------------\nRock on, MBP'))
-                            
-                    server = smtplib.SMTP('smtp.gmail.com',587)
-                    server.ehlo()  
-                    server.starttls()
-                    server.ehlo()
-                    server.login(mbpconfig.mailer_email_address, mbpconfig.mailer_pw)
-                    response = server.sendmail(mbpconfig.mailer_email_address,
-                                    mbpconfig.email_address_list,
-                                    msg.as_string())
-                    if len(response) != 0:
-                         self._log('Possibly some trouble with emailing: ' +str(response))
-                    server.close()        
+                    subject, text = self.compose_email(guid, obj)
+                    self.send_email(subject, text)       
                 except:
-                    self._log("Some kind of disastrous error occurred while emailing " + obj['title']) 
+                    self._log("Some kind of disastrous error occurred while emailing " + obj['title'])
+                    
+        def blog(self, guid, obj):
+                import pumblr
+                #first, need to copy media to hosted dirs
+                #actually, only if we have a highlight and/or a picture 
+                #but, going to just go ahead and make the dir anyway
+                media_dir = mbpconfig.local_media_dir + '/' + guid
+                os.system('mkdir ' + media_dir)
+                
+                #now, go ahead and check if this will be an audio post
+                audio = (len(obj['highlights']) > 0) and obj['full_path'] != ''
+                
+                #initialize text
+                text = ''
+                
+                if obj['picture'] is not None:
+                    pic_path = obj['full_path'] + '/' + obj['picture']
+                    os.system('cp ' + pic_path + ' ' + media_dir)
+                    text = '<img src="' + mbpconfig.hosted_media_url+'/'+guid+'/'+obj['picture']+'"/>\n\n'
+                if audio:
+                    song_path = obj['full_path'] + '/' + object['highlights'][0]
+                    os.system('cp ' + song_path + ' ' + media_dir)
+                
+                #now that we have media in place, can create our post
+                text += obj['content'] if not audio else obj['title'] + '\n\n' + obj['content']
+                
+                #create post params...
+                if audio:
+                    print 'gonna be an audio post'
+                    params = {'externally_hosted_url':mbpconfig.hosted_media_url+'/'+guid+'/'+object['highlights'][0],
+                              'caption':text}
+                else:
+                    print 'gonna be a text post'
+                    params = {'title':obj['title'],
+                              'body':obj['content']}
+                if mbpconfig.tumblr_blog not in ['', None]:
+                    params['group'] = mbpconfig.tumblr_blog
+                
+                #post that shit!
+                pumblr.api.auth(mbpconfig.tumblr_email, mbpconfig.tumblr_pw)
+                print params
+                try:
+                    if audio:
+                        pumblr.api.write_audio(**params)
+                    else:
+                        pumblr.api.write_regular(**params)
+                except:
+                    self._log("Failed to post to tumblr, possibly some encoding issue")
              
 if __name__ == "__main__":
         archiver = ArchiverMain()
