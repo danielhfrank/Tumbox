@@ -175,8 +175,7 @@ class ArchiverMain:
                           'found_on':time.time(),
                           'highlights':highlightFiles,
                           'title':title,
-                          'picture':picture,
-                          'full_path': folder_path
+                          'picture':picture
                           }
                 return retMap
     
@@ -265,18 +264,20 @@ class ArchiverMain:
                 media_dir = mbpconfig.local_media_dir + '/' + guid
                 os.system('mkdir ' + media_dir)
                 
+                full_path = mbpconfig.musicdir + '/' + obj['title']
+                
                 #now, go ahead and check if this will be an audio post
-                audio = (len(obj['highlights']) > 0) and obj['full_path'] != ''
+                audio = (len(obj['highlights']) > 0) and full_path != ''
                 
                 #initialize text
                 text = ''
                 
                 if obj['picture'] is not None:
-                    pic_path = obj['full_path'] + '/' + obj['picture']
+                    pic_path = full_path + '/' + obj['picture']
 		    shutil.copy(pic_path, media_dir)
                     text = '<img src="' + mbpconfig.hosted_media_url+'/'+guid+'/'+obj['picture']+'"/>\n\n'
                 if audio:
-                    song_path = obj['full_path'] + '/' + obj['highlights'][0]
+                    song_path = full_path + '/' + obj['highlights'][0]
                     shutil.copy(song_path, media_dir)                
 
                 #now that we have media in place, can create our post
