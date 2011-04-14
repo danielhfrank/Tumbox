@@ -72,9 +72,8 @@ class ArchiverMain:
                                         processed += 1
                                         print 'Processing ' + subdir
                 self._log(str(processed) + " processed")
-                if processed > 0:
-                    self._save_db()
-                self._log('Exiting')
+                return processed
+                
                         
         def _load_db(self):
                 #for now, assume that it is a file
@@ -98,7 +97,10 @@ class ArchiverMain:
         def fatal_error(self):
                 print 'disaster'#will probably want to email me or something
                 
-        def cleanup(self):
+        def cleanup(self, processed):
+                if processed > 0:
+                    self._save_db()
+                self._log('Exiting')
                 f = open(self.log_file, 'a')
                 f.write('\n********' +time.strftime("%a, %d %b %Y %H:%M") +'**********')
                 f.write(self.log_output)
@@ -274,7 +276,7 @@ class ArchiverMain:
                 
                 if obj['picture'] is not None:
                     pic_path = full_path + '/' + obj['picture']
-		    shutil.copy(pic_path, media_dir)
+                    shutil.copy(pic_path, media_dir)
                     text = '<img src="' + mbpconfig.hosted_media_url+'/'+guid+'/'+obj['picture']+'"/>\n\n'
                 if audio:
                     song_path = full_path + '/' + obj['highlights'][0]
@@ -294,6 +296,8 @@ class ArchiverMain:
                               'body':obj['content']}
                 if mbpconfig.tumblr_blog not in ['', None]:
                     params['group'] = mbpconfig.tumblr_blog
+                if obj['author'] not in ['', None]:
+                	params['tags'] = obj['author']
                 
                 #post that shit!
                 pumblr.api.auth(mbpconfig.tumblr_email, mbpconfig.tumblr_pw)
@@ -309,6 +313,8 @@ class ArchiverMain:
 if __name__ == "__main__":
         #sys.exit()
         archiver = ArchiverMain()
-        #archiver.mainloop()
-        archiver.run_that_shit()
-        archiver.cleanup()
+        num_processed = 0
+        try:
+        		num_processed = archiver.run_that_shit()
+        finally:
+        		archiver.cleanup(num_processed)
