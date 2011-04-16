@@ -25,7 +25,7 @@ import mbpconfig
 
 #Eclipse and others sometimes indicate an error on those first two. Ignore, I hope?
 
-TEST = True
+TEST = False
 
 class ArchiverMain:
 

@@ -1,0 +1,14 @@
+#some hidden stuff that we don't need
+*.DS_Store
+*.project
+*.pydevproject
+
+#.pyc files 
+*.pyc
+
+#config file - don't want email addresses or anything
+mbpconfig.py
+
+#eclipse stuff
+*.project
+*.pydevproject

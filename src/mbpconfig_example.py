@@ -29,4 +29,28 @@ log_file = ''
 #DB file - if using a filesystem 'db'
 db_file = ''
 
+#Send to an email list?
+email_people = True
+
+#List of emails
+email_address_list = ['email1@exmaple.com',
+					  'email2@example.com'
+                      ]
+
+mailer_email_address = ''
+mailer_pw = ''
+
+#Post to tumblr?
+tumblr = True
+
+#account info
+tumblr_email = ''
+tumblr_pw = ''
+#You can leave this one blank if you only have one blog on your account
+tumblr_blog = ''
+
+#hosting stuff
+local_media_dir = '/path/to/your/droppages/media/folder'
+hosted_media_url = 'http://your-droppages-site.droppages.com'
+
 
