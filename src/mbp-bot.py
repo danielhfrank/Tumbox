@@ -83,7 +83,7 @@ class ArchiverMain:
                     f.close()
                     self._log('Successfully loaded db')
                 except:
-                    self.mbp_db = {}#THIS IS TEMPORARY to make sure we don't beef over empty file. DANGER
+                    self.fatal_error()
         
         def _save_db(self):
                 f = open(self.mbp_db_file, 'w')
@@ -95,7 +95,9 @@ class ArchiverMain:
                 print text
 
         def fatal_error(self):
-                print 'disaster'#will probably want to email me or something
+                self._log('Fatal Error, exiting')
+                #will probably want to email me or something
+                self.cleanup(0)
                 
         def cleanup(self, processed):
                 if processed > 0:
@@ -293,7 +295,7 @@ class ArchiverMain:
                 else:
                     print 'gonna be a text post'
                     params = {'title':obj['title'],
-                              'body':obj['content']}
+                              'body':text}
                 if mbpconfig.tumblr_blog not in ['', None]:
                     params['group'] = mbpconfig.tumblr_blog
                 if obj['author'] not in ['', None]:
