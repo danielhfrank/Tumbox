@@ -167,6 +167,7 @@ class ArchiverMain:
                 doc = text
                 doc +='\n\nTracklist:\n'
                 tracks = filter(self.looksLikeMusic, all_files)
+                tracks.sort()
                 if len(tracks) == 0: doc += "No music :("
                 for track in tracks:
                     doc += (track[:-4] + "\n")
