@@ -1,0 +1,1 @@
+Tumbox publishes new additions in a Dropbox shared music folder (or, conceivably, any folder) to a Tumblr blog. Photos and sample audio tracks are hosted through Droppages. Participants can also be notified via email of new posts. A working if rather NSFW example can be found at musicbuttpirate.tumblr.com. Wayyyy more documentation to come
