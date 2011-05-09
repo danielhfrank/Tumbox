@@ -20,7 +20,7 @@ import time
 import json
 import hashlib
 import shutil
-import mbpconfig
+import tumboxconfig
 
 
 #Eclipse and others sometimes indicate an error on those first two. Ignore, I hope?
@@ -30,40 +30,40 @@ TEST = False
 class ArchiverMain:
 
         def __init__(self):
-            self.log_file = mbpconfig.log_file
-            self.musicdir = mbpconfig.musicdir
-            self.mbp_db_file = mbpconfig.db_file
-            self.mbp_db = {}
-            self.skip_dirs = mbpconfig.skip_dirs
+            self.log_file = tumboxconfig.log_file
+            self.musicdir = tumboxconfig.musicdir
+            self.tumbox_db_file = tumboxconfig.db_file
+            self.tumbox_db = {}
+            self.skip_dirs = tumboxconfig.skip_dirs
             self.log_output = ''
             
                                 
         def run_that_shit(self):
                 self._load_db()
-#                for key in self.mbp_db.keys():
-#                    self.mbp_db[key]['full_path'] = ''
+#                for key in self.tumbox_db.keys():
+#                    self.tumbox_db[key]['full_path'] = ''
 #                self._save_db()
-#                guid = self.mbp_db.keys()[1]
-#                self.blog(guid, self.mbp_db[guid])
+#                guid = self.tumbox_db.keys()[1]
+#                self.blog(guid, self.tumbox_db[guid])
 #                sys.exit()
                 
                                 
                 processed = 0
                 for subdir in filter(lambda x: x not in self.skip_dirs, self.getDirsPresent()):
-                        if '.mbp_guid' not in os.listdir(self.musicdir + '/' + subdir):
+                        if '.tumbox_guid' not in os.listdir(self.musicdir + '/' + subdir):
                                 #we got a new one! generate and rock out w cock out
                                 guid = hashlib.sha1(subdir + str(time.time())).hexdigest()
                                 
-                                f = open(self.musicdir+'/'+subdir+'/.mbp_guid', 'w')
+                                f = open(self.musicdir+'/'+subdir+'/.tumbox_guid', 'w')
                                 f.write(guid)
                                 f.close()
                                 #Don't log now - this is now marked to be logged next time
                         else:
                                 #now, action depends on whether we have that guid in our db or not
-                                f = open(self.musicdir+'/'+subdir+'/.mbp_guid', 'r')
+                                f = open(self.musicdir+'/'+subdir+'/.tumbox_guid', 'r')
                                 guid = f.read()
                                 f.close()
-                                if guid in self.mbp_db:
+                                if guid in self.tumbox_db:
                                     pass#nothing for now. could look for updates in the future
                                 else:
                                     #We found but did not log last time. This means that we log now
@@ -78,16 +78,16 @@ class ArchiverMain:
         def _load_db(self):
                 #for now, assume that it is a file
                 try:
-                    f = open(self.mbp_db_file)
-                    self.mbp_db = json.load(f)
+                    f = open(self.tumbox_db_file)
+                    self.tumbox_db = json.load(f)
                     f.close()
                     self._log('Successfully loaded db')
                 except:
                     self.fatal_error()
         
         def _save_db(self):
-                f = open(self.mbp_db_file, 'w')
-                json.dump(self.mbp_db, f, indent=5)
+                f = open(self.tumbox_db_file, 'w')
+                json.dump(self.tumbox_db, f, indent=5)
                 f.close()
         
         def _log(self, text):
@@ -154,7 +154,7 @@ class ArchiverMain:
                                 break
                 if text != '':
                         obj = self.compose(root, text)
-                        self.mbp_db[guid] = obj
+                        self.tumbox_db[guid] = obj
                         self.distribute(guid, obj)
                         return True
                 else:
@@ -219,26 +219,26 @@ class ArchiverMain:
         '''    
         def distribute(self, guid, obj):               
                 print obj['content']#This shit is seriously just for testing
-                if mbpconfig.local_archive: self.archive_locally(guid, obj)
-                if mbpconfig.email_people: self.email_people(guid, obj)
-                if mbpconfig.tumblr: self.blog(guid, obj)
+                if tumboxconfig.local_archive: self.archive_locally(guid, obj)
+                if tumboxconfig.email_people: self.email_people(guid, obj)
+                if tumboxconfig.tumblr: self.blog(guid, obj)
                 pass
         
         def archive_locally(self, guid, obj):
-                archive_dir = mbpconfig.archive_dir if not TEST else mbpconfig.archive_test_dir
+                archive_dir = tumboxconfig.archive_dir if not TEST else tumboxconfig.archive_test_dir
                 f = open(archive_dir + '/' + obj['title'] + '.txt', 'w')
                 f.write(obj['content'])
                 
         def compose_email(self, guid, obj):
-        		rawk = '_+880______________________________\n_++88______________________________\n_++88______________________________\n__+880__________________________++_\n__+888_________________________+88_\n__++880________________________+88_\n__++888_______+++88__________++88__\n__+++8888__+++88880++888____+++88__\n___++888+++++8888+++888888+++888___\n___++88++++88888+++8888888++888____\n___+++++++88888888888888888888_____\n___++++++++88888888888888888888____\n___+++++++++0088888888888888888____\n____++++++++0088888888888888888____\n_____++++++++000888888888888888____\n_____+++++++++08888888888888888____\n______++++++++0888888888888888_____\n________+++++++88888888888888______\n________+++++++88888888888888______'
+                rawk = '_+880______________________________\n_++88______________________________\n_++88______________________________\n__+880__________________________++_\n__+888_________________________+88_\n__++880________________________+88_\n__++888_______+++88__________++88__\n__+++8888__+++88880++888____+++88__\n___++888+++++8888+++888888+++888___\n___++88++++88888+++8888888++888____\n___+++++++88888888888888888888_____\n___++++++++88888888888888888888____\n___+++++++++0088888888888888888____\n____++++++++0088888888888888888____\n_____++++++++000888888888888888____\n_____+++++++++08888888888888888____\n______++++++++0888888888888888_____\n________+++++++88888888888888______\n________+++++++88888888888888______'
                 subject = '[MBP] New post from ' + (obj['author'] if obj['author'] is not None else 'someone in mbp')
                 text = obj['title'] + '\n\n' + obj['content'] + '\n\n--------------\n\n' + rawk
                 return (subject, text)
         
         def send_email(self, subject, text):
                 msg = MIMEMultipart()
-                msg['From'] = mbpconfig.mailer_email_address
-                msg['To'] = mbpconfig.mailer_email_address
+                msg['From'] = tumboxconfig.mailer_email_address
+                msg['To'] = tumboxconfig.mailer_email_address
                 msg['Subject'] = subject
                 
                 msg.attach(MIMEText(text))
@@ -247,12 +247,12 @@ class ArchiverMain:
                 server.ehlo()  
                 server.starttls()
                 server.ehlo()
-                server.login(mbpconfig.mailer_email_address, mbpconfig.mailer_pw)
-                response = server.sendmail(mbpconfig.mailer_email_address,
-                                mbpconfig.email_address_list,
+                server.login(tumboxconfig.mailer_email_address, tumboxconfig.mailer_pw)
+                response = server.sendmail(tumboxconfig.mailer_email_address,
+                                tumboxconfig.email_address_list,
                                 msg.as_string())
                 if len(response) != 0:
-                     self._log('Possibly some trouble with emailing: ' +str(response))
+                    self._log('Possibly some trouble with emailing: ' +str(response))
                 server.close()
                 
         def email_people(self, guid, obj):
@@ -267,10 +267,10 @@ class ArchiverMain:
                 #first, need to copy media to hosted dirs
                 #actually, only if we have a highlight and/or a picture 
                 #but, going to just go ahead and make the dir anyway
-                media_dir = mbpconfig.local_media_dir + '/' + guid
+                media_dir = tumboxconfig.local_media_dir + '/' + guid
                 os.system('mkdir ' + media_dir)
                 
-                full_path = mbpconfig.musicdir + '/' + obj['title']
+                full_path = tumboxconfig.musicdir + '/' + obj['title']
                 
                 #now, go ahead and check if this will be an audio post
                 audio = (len(obj['highlights']) > 0) and full_path != ''
@@ -281,7 +281,7 @@ class ArchiverMain:
                 if obj['picture'] is not None:
                     pic_path = full_path + '/' + obj['picture']
                     shutil.copy(pic_path, media_dir)
-                    text = '<img src="' + mbpconfig.hosted_media_url+'/'+guid+'/'+obj['picture']+'"/>\n\n'
+                    text = '<img src="' + tumboxconfig.hosted_media_url+'/'+guid+'/'+obj['picture']+'"/>\n\n'
                 if audio:
                     song_path = full_path + '/' + obj['highlights'][0]
                     shutil.copy(song_path, media_dir)                
@@ -292,19 +292,19 @@ class ArchiverMain:
                 #create post params...
                 if audio:
                     print 'gonna be an audio post'
-                    params = {'externally_hosted_url':mbpconfig.hosted_media_url+'/'+guid+'/'+obj['highlights'][0],
+                    params = {'externally_hosted_url':tumboxconfig.hosted_media_url+'/'+guid+'/'+obj['highlights'][0],
                               'caption':text}
                 else:
                     print 'gonna be a text post'
                     params = {'title':obj['title'],
                               'body':text}
-                if mbpconfig.tumblr_blog not in ['', None]:
-                    params['group'] = mbpconfig.tumblr_blog
+                if tumboxconfig.tumblr_blog not in ['', None]:
+                    params['group'] = tumboxconfig.tumblr_blog
                 if obj['author'] not in ['', None]:
                 	params['tags'] = obj['author']
                 
                 #post that shit!
-                pumblr.api.auth(mbpconfig.tumblr_email, mbpconfig.tumblr_pw)
+                pumblr.api.auth(tumboxconfig.tumblr_email, tumboxconfig.tumblr_pw)
                 print params
                 try:
                     if audio:

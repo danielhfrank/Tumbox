@@ -1,5 +1,5 @@
 '''
-Config file for mbp-bot
+Config file for tumbox
 
 Created on Apr 3, 2011
 
