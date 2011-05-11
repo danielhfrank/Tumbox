@@ -185,15 +185,21 @@ class ArchiverMain:
                 return retMap
     
         def _find_highlights(self, text, musicfiles):
+                if len(musicfiles) == 1: return musicfiles[0]
                 lines = text.split('\n')
-                highlightLines = [x for x in lines if x.lower().startswith('highlights:')]
-                if len(highlightLines) == 0: return []
-                highlightLine = highlightLines[-1]#assume the last one is the one we want
-                sep = ';' if ';' in highlightLine else ',' #probably most often ',' but just to be safe
-                titles = highlightLine[len('highlights:'):].split(sep)
+                highlight_triggers = ['highlights:', 'standout tracks:']
                 results = []
-                for musicfile in musicfiles:
-                        if any(songname in musicfile for songname in titles): results.append(musicfile)
+                for trigger in highlight_triggers:
+                    highlightLines = [x for x in lines if x.lower().startswith(trigger)]
+                    if len(highlightLines) == 0: continue
+                    highlightLine = highlightLines[-1]#assume the last one is the one we want
+                    sep = ';' if ';' in highlightLine else ',' #probably most often ',' but just to be safe
+                    highlight_titles = highlightLine[len(trigger):].split(sep)
+                    for songname in highlight_titles:
+                        for musicfile in musicfiles:
+                                if songname in musicfile: results.append(musicfile)
+                    #Don't want to do this for more than one trigger, so break if we get here
+                    break
                 return results
     
         def _find_author(self, text):
