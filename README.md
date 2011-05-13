@@ -4,12 +4,13 @@ Dropbox shared music folder --> Tumblr music blog
 
 ---
 
-**Motivation**: You participate in a Dropbox shared folder in which music albums are shared frequently. You usually leave some sort of text file with the albums to describe what they are - *right now nothing will happen without some sort of info file - I will make it possible to blog without one soon*. You want a record of what's been shared and/or want to be able to notify members when a new album is posted and/or want to show people outside your shared folder a glimpse of what is being shared
+**Motivation**: You participate in a Dropbox shared folder in which music albums are shared frequently. You usually leave some sort of text or .rtf file with the albums to describe what they are - *right now nothing will happen without some sort of info file - I will make it possible to blog without one soon*. You want a record of what's been shared and/or want to be able to notify members when a new album is posted and/or want to show people outside your shared folder a glimpse of what is being shared. You kind of want to prove that this can all be done without renting any server space, just by using Dropbox.
 
 ---
 
 **Setup**: 
-1. Fill out the config file (from the example) as fits your needs.
+1. Fill out the config file (from the example) as fits your needs. Afterwards you *must* rename it to tumboxconfig.py
+
 2. Set up tumbox-bot to run as a [cron job](http://en.wikipedia.org/wiki/Cron); recommended that you run every half hour.
 
 (One day there will be an installation script....)

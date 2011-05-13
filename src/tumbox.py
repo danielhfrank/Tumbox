@@ -236,9 +236,8 @@ class ArchiverMain:
                 f.write(obj['content'])
                 
         def compose_email(self, guid, obj):
-                rawk = '_+880______________________________\n_++88______________________________\n_++88______________________________\n__+880__________________________++_\n__+888_________________________+88_\n__++880________________________+88_\n__++888_______+++88__________++88__\n__+++8888__+++88880++888____+++88__\n___++888+++++8888+++888888+++888___\n___++88++++88888+++8888888++888____\n___+++++++88888888888888888888_____\n___++++++++88888888888888888888____\n___+++++++++0088888888888888888____\n____++++++++0088888888888888888____\n_____++++++++000888888888888888____\n_____+++++++++08888888888888888____\n______++++++++0888888888888888_____\n________+++++++88888888888888______\n________+++++++88888888888888______'
-                subject = '[MBP] New post from ' + (obj['author'] if obj['author'] is not None else 'someone in mbp')
-                text = obj['title'] + '\n\n' + obj['content'] + '\n\n--------------\n\n' + rawk
+                subject = '['+tumboxconfig.email_shortname+'] New post from ' + (obj['author'] if obj['author'] is not None else 'someone in '+tumboxconfig.email_shortname)
+                text = obj['title'] + '\n\n' + obj['content'] + '\n\n--------------\n\n' + tumboxconfig.email_sig
                 return (subject, text)
         
         def send_email(self, subject, text):
