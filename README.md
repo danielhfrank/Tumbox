@@ -15,13 +15,15 @@ Dropbox shared music folder --> Tumblr music blog. Tumbox generates a blog post 
 
 (One day there will be an installation script....)
 
+Expected 'usage' is a folder where albums are periodically added, always in a folder at the top level of your music folder, and always with a text or rtf file ("info file") describing them. Conventionally, there is a line in the info file starting with the string 'Highlights:', and followed by the names of some tracks of interest. The first one matched to a music file in the music folder will be uploaded to the blog. Also by convention the uploader will sign off in a line starting with a '-'. The uploader's name will be added as a tag to the tumblr post and can be used for sorting. Tumbox will also look for cover art included with the file and will upload embed it in the post if found.
+
 ---
 
-**Working Example**: [Music Butt Pirate](http://musicbuttpirate.tumblr.com)
+**Working Example**: [Music Butt Pirate](http://musicbuttpirate.tumblr.com) (caution, slightly nsfw)
 
 ___
 
-***What exactly is it doing?***: Tumbox leaves behind a tiny hidden file in each of your album folders and uses the contents of that file to determine whether it has already logged that album. Every time it runs it will check to see if there are new albums that it hasn't logged, and at the end of this process keep a record of everything it has stored in its database (at time of writing, this is just a json file... sorry I'm not sorry)
+***What exactly is it doing?***: Tumbox leaves behind a tiny hidden file in each of your album folders and uses the contents of that file to determine whether it has already logged that album. Every time it runs it will check to see if there are new albums that it hasn't logged, and if it finds any will generate a blog post, email, and/or text archive of the new posts. At the end of this process it will keep a record of everything it has stored in its database (at time of writing, this is just a json file... sorry I'm not sorry)
 
 ---
 

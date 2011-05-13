@@ -38,20 +38,14 @@ class ArchiverMain:
             self.log_output = ''
             
                                 
-        def run_that_shit(self):
+        def run(self):
                 self._load_db()
-#                for key in self.tumbox_db.keys():
-#                    self.tumbox_db[key]['full_path'] = ''
-#                self._save_db()
-#                guid = self.tumbox_db.keys()[1]
-#                self.blog(guid, self.tumbox_db[guid])
-#                sys.exit()
                 
                                 
                 processed = 0
                 for subdir in filter(lambda x: x not in self.skip_dirs, self.getDirsPresent()):
                         if '.tumbox_guid' not in os.listdir(self.musicdir + '/' + subdir):
-                                #we got a new one! generate and rock out w cock out
+                                #we got a new one! generate the guid
                                 guid = hashlib.sha1(subdir + str(time.time())).hexdigest()
                                 
                                 f = open(self.musicdir+'/'+subdir+'/.tumbox_guid', 'w')
@@ -66,7 +60,7 @@ class ArchiverMain:
                                 if guid in self.tumbox_db:
                                     pass#nothing for now. could look for updates in the future
                                 else:
-                                    #We found but did not log last time. This means that we log now
+                                    #We found but did not log last time. This means that we log(process) now
                                     if self._process_dir(self.musicdir+'/'+subdir, guid):
                                         self._log('Processed ' +subdir)
                                         processed += 1
@@ -324,6 +318,6 @@ if __name__ == "__main__":
         archiver = ArchiverMain()
         num_processed = 0
         try:
-        		num_processed = archiver.run_that_shit()
+        		num_processed = archiver.run()
         finally:
         		archiver.cleanup(num_processed)
