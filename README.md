@@ -1,5 +1,5 @@
 # Tumbox #
-Dropbox shared music folder --> Tumblr music blog 
+Dropbox shared music folder --> Tumblr music blog. Tumbox generates a blog post for each new album added to your shared folder.
 
 
 ---
