@@ -179,7 +179,7 @@ class ArchiverMain:
                 return retMap
     
         def _find_highlights(self, text, musicfiles):
-                if len(musicfiles) == 1: return musicfiles[0]
+                if len(musicfiles) == 1: return [musicfiles[0]]
                 lines = text.split('\n')
                 highlight_triggers = ['highlights:', 'standout tracks:']
                 results = []
