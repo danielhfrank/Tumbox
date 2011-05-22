@@ -46,6 +46,7 @@ class ArchiverMain:
                 for subdir in filter(lambda x: x not in self.skip_dirs, self.getDirsPresent()):
                         if '.tumbox_guid' not in os.listdir(self.musicdir + '/' + subdir):
                                 #we got a new one! generate the guid
+                                self._log('Adding guid file to ' + subdir)
                                 guid = hashlib.sha1(subdir + str(time.time())).hexdigest()
                                 
                                 f = open(self.musicdir+'/'+subdir+'/.tumbox_guid', 'w')
@@ -277,16 +278,24 @@ class ArchiverMain:
                 #initialize text
                 text = ''
                 
+                if audio:
+                    song_path = full_path + '/' + obj['highlights'][0]
+                    shutil.copy(song_path, media_dir)
+                    #Put in name of song that we decided to play
+                    text += '<i>Playing - ' + obj['highlights'][0][:-4] + '</i>\n\n'
+                    #And now the title
+                    text += '<h2>' +obj['title'] + '</h2>\n\n'
+                
                 if obj['picture'] is not None:
                     pic_path = full_path + '/' + obj['picture']
                     shutil.copy(pic_path, media_dir)
-                    text = '<img src="' + tumboxconfig.hosted_media_url+'/'+guid+'/'+obj['picture']+'"/>\n\n'
-                if audio:
-                    song_path = full_path + '/' + obj['highlights'][0]
-                    shutil.copy(song_path, media_dir)                
+                    text += '<img src="' + tumboxconfig.hosted_media_url+'/'+guid+'/'+obj['picture']+'"/>\n\n'
+              
 
                 #now that we have media in place, can create our post
-                text += obj['content'] if not audio else obj['title'] + '\n\n' + obj['content']
+                text += obj['content']
+                text = text.replace('\n', '<br/>')
+
                 
                 #create post params...
                 if audio:
