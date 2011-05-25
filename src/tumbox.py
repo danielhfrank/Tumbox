@@ -192,7 +192,8 @@ class ArchiverMain:
                     highlight_titles = highlightLine[len(trigger):].split(sep)
                     for songname in highlight_titles:
                         for musicfile in musicfiles:
-                                if songname in musicfile: results.append(musicfile)
+                            #the check on isdigit is so that we will be able to make things prettier in blog                                
+                            if (songname in musicfile) and not (songname[0].isdigit()): results.append(musicfile)
                     #Don't want to do this for more than one trigger, so break if we get here
                     break
                 return results
@@ -279,10 +280,13 @@ class ArchiverMain:
                 text = ''
                 
                 if audio:
-                    song_path = full_path + '/' + obj['highlights'][0]
+                    sample_song = obj['highlights'][0]
+                    song_path = full_path + '/' + sample_song
                     shutil.copy(song_path, media_dir)
-                    #Put in name of song that we decided to play
-                    text += '<i>Playing - ' + obj['highlights'][0][:-4] + '</i>\n\n'
+                    
+                    #Put in name of song that we decided to play: first, remove numbers from start
+                    sample_song = sample_song[self.firstAlpha(sample_song):-4]
+                    text += '<i>Playing - ' + sample_song + '</i>\n\n'
                     #And now the title
                     text += '<h2>' +obj['title'] + '</h2>\n\n'
                 
@@ -321,6 +325,12 @@ class ArchiverMain:
                         pumblr.api.write_regular(**params)
                 except:
                     self._log("Failed to post to tumblr, possibly some encoding issue")
+                    
+                    
+        def firstAlpha(self, input):
+            for x in range(len(input)):
+                if input[x].isalpha(): return x
+            return -1
              
 if __name__ == "__main__":
         #sys.exit()
