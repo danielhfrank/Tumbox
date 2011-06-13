@@ -291,16 +291,17 @@ class ArchiverMain:
                     text += '<h2>' +obj['title'] + '</h2>\n\n'
                 
                 if obj['picture'] is not None:
-                	from PIL import Image
-                	pic_name = obj['picture']
+                    from PIL import Image
+                    pic_name = obj['picture']
                     pic_path = full_path + '/' + pic_name
-                    img = Image(pic_path)
+                    img = Image.open(pic_path)
                     if img.size[0] > 500:
                     	#too wide, need to shrink
-                    	ratio - img.size[1] / float(img.size[0])
-                    	height = round(ratio * 500)
+                    	ratio = img.size[1] / float(img.size[0])
+                    	height = int(round(ratio * 500))
                     	img1 = img.resize((500, height), Image.ANTIALIAS)
-                    	pic_path = "resized-" + pic_path
+                    	pic_name = '/resized-' + pic_name
+                    	pic_path = full_path + '/' + pic_name
                     	img1.save(pic_path)
                     shutil.copy(pic_path, media_dir)
                     text += '<img src="' + tumboxconfig.hosted_media_url+'/'+guid+'/'+pic_name+'"/>\n\n'
