@@ -159,7 +159,7 @@ class ArchiverMain:
         def compose(self, folder_path, text):
                 title = folder_path.rsplit("/")[-1]#folder_path better have / in it
                 all_files = os.listdir(folder_path)
-                doc = text
+                doc = str(unicode(text, errors='ignore'))#convert to unicode as such to avoid weird errors with bad characters
                 doc +='\n\nTracklist:\n'
                 tracks = filter(self.looksLikeMusic, all_files)
                 tracks.sort()
@@ -193,7 +193,7 @@ class ArchiverMain:
                     for songname in highlight_titles:
                         for musicfile in musicfiles:
                             #the check on isdigit is so that we will be able to make things prettier in blog                                
-                            if (songname in musicfile) and not (songname[0].isdigit()): results.append(musicfile)
+                            if (songname.lower() in musicfile.lower()) and not (songname[0].isdigit()): results.append(musicfile)
                     #Don't want to do this for more than one trigger, so break if we get here
                     break
                 return results
@@ -344,7 +344,7 @@ class ArchiverMain:
             return -1
              
 if __name__ == "__main__":
-        #sys.exit()
+        # sys.exit()
         archiver = ArchiverMain()
         num_processed = 0
         try:
