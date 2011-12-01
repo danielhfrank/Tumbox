@@ -58,14 +58,14 @@ class ArchiverMain:
                                 f = open(self.musicdir+'/'+subdir+'/.tumbox_guid', 'r')
                                 guid = f.read()
                                 f.close()
-                                if guid in self.tumbox_db:
+                                if self._lookup(guid):
                                     pass#nothing for now. could look for updates in the future
                                 else:
                                     #We found but did not log last time. This means that we log(process) now
+                                    self._log('Processing ' + subdir)
                                     if self._process_dir(self.musicdir+'/'+subdir, guid):
                                         self._log('Processed ' +subdir)
                                         processed += 1
-                                        print 'Processing ' + subdir
                 self._log(str(processed) + " processed")
                 return processed
                 
@@ -84,6 +84,12 @@ class ArchiverMain:
                 f = open(self.tumbox_db_file, 'w')
                 json.dump(self.tumbox_db, f, indent=5)
                 f.close()
+                
+        def _lookup(self,guid):
+            return self.tumbox_db.get(guid,None)
+            
+        def _add_to_db(self,guid,obj):
+            self.tumbox_guid[guid] = obj
         
         def _log(self, text):
                 self.log_output += '\n' + text
@@ -149,7 +155,7 @@ class ArchiverMain:
                                 break
                 if text != '':
                         obj = self.compose(root, text)
-                        self.tumbox_db[guid] = obj
+                        self._add_to_db(guid,obj)
                         self.distribute(guid, obj)
                         return True
                 else:
