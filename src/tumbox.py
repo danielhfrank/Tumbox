@@ -193,7 +193,7 @@ class ArchiverMain:
         def compose(self, folder_path, text):
             title = folder_path.rsplit("/")[-1]#folder_path better have / in it
             all_files = os.listdir(folder_path)
-            doc = str(unicode(text, errors='ignore'))#convert to unicode as such to avoid weird errors with bad characters
+            doc = unicode(text, errors='ignore').encode('utf-8')#convert to unicode as such to avoid weird errors with bad characters
             doc +='\n\nTracklist:\n'
             tracks = filter(self.looksLikeMusic, all_files)
             tracks.sort()
