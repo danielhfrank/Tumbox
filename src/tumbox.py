@@ -296,7 +296,7 @@ class ArchiverMain:
                 #And now the title
                 text += '<h2>' +obj['title'] + '</h2>\n\n'
             
-            if obj['picture'] is not None:
+            if obj['picture']:
                 from PIL import Image
                 pic_name = obj['picture']
                 pic_path = full_path + '/' + pic_name
@@ -327,9 +327,9 @@ class ArchiverMain:
                 print 'gonna be a text post'
                 params = {'title':obj['title'],
                           'body':text}
-            if tumboxconfig.tumblr_blog not in ['', None]:
+            if tumboxconfig.tumblr_blog:
                 params['group'] = tumboxconfig.tumblr_blog
-            if obj['author'] not in ['', None]:
+            if obj['author']:
                 params['tags'] = obj['author']
             
             #post that shit!
