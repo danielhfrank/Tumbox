@@ -88,7 +88,6 @@ class ArchiverMain:
                         
         def _load_db(self, is_mongo):
             if is_mongo:
-                print self._mongo_uri()
                 connection = Connection(self._mongo_uri())
                 self.tumbox_db = connection[tumboxconfig.mongo_dbname]
             else:
@@ -96,9 +95,10 @@ class ArchiverMain:
                     f = open(self.tumbox_db_file)
                     self.tumbox_db = json.load(f)
                     f.close()
-                    self._log('Successfully loaded db')
                 except:
                     self.fatal_error()
+            self._log('Successfully loaded db')
+            
         
         def _save_db(self):
             if not self.is_mongo: #with mongo we save on every insert
