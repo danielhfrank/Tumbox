@@ -10,12 +10,11 @@ from pyth.plugins.rtf15.reader import Rtf15Reader
 
 import smtplib
 from email.MIMEMultipart import MIMEMultipart
-from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
-from email import Encoders
+
+from pymongo import Connection
 
 import os
-import sys
 import time
 import json
 import hashlib
@@ -71,14 +70,17 @@ class ArchiverMain:
                 
                         
         def _load_db(self):
-                #for now, assume that it is a file
-                try:
-                    f = open(self.tumbox_db_file)
-                    self.tumbox_db = json.load(f)
-                    f.close()
-                    self._log('Successfully loaded db')
-                except:
-                    self.fatal_error()
+                if tumboxconfig.dbtype is 'mongo':
+                    connection = Connection(tumboxconfig.mongo_host, tumboxconfig.mongo_port)
+                    self.tumbox_db = connection[tumboxconfig.mongo_dbname]
+                else:
+                    try:
+                        f = open(self.tumbox_db_file)
+                        self.tumbox_db = json.load(f)
+                        f.close()
+                        self._log('Successfully loaded db')
+                    except:
+                        self.fatal_error()
         
         def _save_db(self):
                 f = open(self.tumbox_db_file, 'w')
@@ -302,13 +304,13 @@ class ArchiverMain:
                     pic_path = full_path + '/' + pic_name
                     img = Image.open(pic_path)
                     if img.size[0] > 500:
-                    	#too wide, need to shrink
-                    	ratio = img.size[1] / float(img.size[0])
-                    	height = int(round(ratio * 500))
-                    	img1 = img.resize((500, height), Image.ANTIALIAS)
-                    	pic_name = '/resized-' + pic_name
-                    	pic_path = full_path + '/' + pic_name
-                    	img1.save(pic_path)
+                        #too wide, need to shrink
+                        ratio = img.size[1] / float(img.size[0])
+                        height = int(round(ratio * 500))
+                        img1 = img.resize((500, height), Image.ANTIALIAS)
+                        pic_name = '/resized-' + pic_name
+                        pic_path = full_path + '/' + pic_name
+                        img1.save(pic_path)
                     shutil.copy(pic_path, media_dir)
                     text += '<img src="' + tumboxconfig.hosted_media_url+'/'+guid+'/'+pic_name+'"/>\n\n'
               
@@ -330,7 +332,7 @@ class ArchiverMain:
                 if tumboxconfig.tumblr_blog not in ['', None]:
                     params['group'] = tumboxconfig.tumblr_blog
                 if obj['author'] not in ['', None]:
-                	params['tags'] = obj['author']
+                    params['tags'] = obj['author']
                 
                 #post that shit!
                 pumblr.api.auth(tumboxconfig.tumblr_email, tumboxconfig.tumblr_pw)
@@ -354,6 +356,6 @@ if __name__ == "__main__":
         archiver = ArchiverMain()
         num_processed = 0
         try:
-        		num_processed = archiver.run()
+                num_processed = archiver.run()
         finally:
-        		archiver.cleanup(num_processed)
+                archiver.cleanup(num_processed)
