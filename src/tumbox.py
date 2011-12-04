@@ -15,11 +15,13 @@ from email.MIMEText import MIMEText
 from pymongo import Connection
 
 import os
+import sys
 import time
 import json
 import hashlib
 import shutil
 import tumboxconfig
+import copy
 
 
 #Eclipse and others sometimes indicate an error on those first two. Ignore, I hope?
@@ -36,10 +38,20 @@ class ArchiverMain:
             self.skip_dirs = tumboxconfig.skip_dirs
             self.log_output = ''
             self.is_mongo = tumboxconfig.dbtype is 'mongo'
+            
+        def migrate_to_mongo(self):
+            self._load_db(False)
+            file_db = copy.copy(self.tumbox_db)
+            self._load_db(True)
+            self.is_mongo = True
+            for guid, obj in file_db.items():
+                print "Adding %s" % obj.get('title', 'something')
+                self._add_to_db(guid,obj)
+
                         
                                 
         def run(self):
-            self._load_db()
+            self._load_db(self.is_mongo)
             processed = 0
             for subdir in filter(lambda x: x not in self.skip_dirs, self.getDirsPresent()):
                     if '.tumbox_guid' not in os.listdir(self.musicdir + '/' + subdir):
@@ -67,10 +79,17 @@ class ArchiverMain:
             self._log(str(processed) + " processed")
             return processed
                 
+        def _mongo_uri(self):
+            return "mongodb://%s:%s@%s:%s/%s" % (tumboxconfig.mongo_user,
+                tumboxconfig.mongo_pw,
+                tumboxconfig.mongo_host,
+                tumboxconfig.mongo_port,
+                tumboxconfig.mongo_dbname)
                         
-        def _load_db(self):
-            if self.is_mongo:
-                connection = Connection(tumboxconfig.mongo_host, tumboxconfig.mongo_port)
+        def _load_db(self, is_mongo):
+            if is_mongo:
+                print self._mongo_uri()
+                connection = Connection(self._mongo_uri())
                 self.tumbox_db = connection[tumboxconfig.mongo_dbname]
             else:
                 try:
@@ -361,6 +380,8 @@ class ArchiverMain:
 if __name__ == "__main__":
         # sys.exit()
         archiver = ArchiverMain()
+        # archiver.migrate_to_mongo()
+        # sys.exit()
         num_processed = 0
         try:
                 num_processed = archiver.run()
