@@ -35,7 +35,8 @@ class ArchiverMain:
             self.tumbox_db = {}
             self.skip_dirs = tumboxconfig.skip_dirs
             self.log_output = ''
-            
+            self.is_mongo = tumboxconfig.dbtype is 'mongo'
+                        
                                 
         def run(self):
             self._load_db()
@@ -68,7 +69,7 @@ class ArchiverMain:
                 
                         
         def _load_db(self):
-            if tumboxconfig.dbtype is 'mongo':
+            if self.is_mongo:
                 connection = Connection(tumboxconfig.mongo_host, tumboxconfig.mongo_port)
                 self.tumbox_db = connection[tumboxconfig.mongo_dbname]
             else:
@@ -81,15 +82,23 @@ class ArchiverMain:
                     self.fatal_error()
         
         def _save_db(self):
-            f = open(self.tumbox_db_file, 'w')
-            json.dump(self.tumbox_db, f, indent=5)
-            f.close()
+            if not self.is_mongo: #with mongo we save on every insert
+                f = open(self.tumbox_db_file, 'w')
+                json.dump(self.tumbox_db, f, indent=5)
+                f.close()
                 
         def _lookup(self,guid):
-            return self.tumbox_db.get(guid,None)
+            if self.is_mongo:
+                return self.tumbox_db.posts.find_one({'_id':guid})
+            else:
+                return self.tumbox_db.get(guid,None)
             
         def _add_to_db(self,guid,obj):
-            self.tumbox_guid[guid] = obj
+            if self.is_mongo:
+                obj['_id'] = guid
+                self.tumbox_db.posts.insert(obj)
+            else:
+                self.tumbox_guid[guid] = obj
         
         def _log(self, text):
             self.log_output += '\n' + text
