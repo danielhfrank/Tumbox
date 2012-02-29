@@ -150,7 +150,7 @@ class ArchiverMain:
             return (name.endswith(".mp3")) or (name.endswith(".m4a")) or (name.endswith(".aac"))
                 
         def looksLikeAPicture(self, name):
-            extension = name[name.index('.')+1:]
+            extension = name[name.find('.')+1:]
             return (extension in ['jpg', 'jpeg', 'gif', 'png'])
 
         def readPlaintext(self, path):

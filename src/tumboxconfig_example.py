@@ -26,8 +26,22 @@ archive_test_dir = ''
 #Log file - log output will be stored here. Absolute path
 log_file = ''
 
-#DB file - absolute path to file where db will be stored - .json extension recommended
-db_file = ''
+#======DB==============================
+
+
+# dbtype = 'file'
+dbtype = 'mongo'
+
+# db_file = '/Users/dan/Dropbox/.mbp_helpers/mbp_db.json'
+
+#MONGO
+mongo_host = ''
+mongo_port = 29117
+mongo_dbname = ''
+mongo_user = ''
+mongo_pw = ''
+
+#=========================================
 
 #Send to an email list?
 email_people = True
